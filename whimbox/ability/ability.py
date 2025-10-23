@@ -134,11 +134,11 @@ class AbilityManager:
         # 检查当前能力配置是否已经满足要求
         if ability_key == 'jump':
             if self.jump_ability == ability_name:
-                ui_control.ui_goto(page_main)
+                ui_control.goto_page(page_main)
                 return True
         else:
             if self.ability_keymap.get(ability_name, None) == ability_key:
-                ui_control.ui_goto(page_main)
+                ui_control.goto_page(page_main)
                 return True
 
         # 开始配置能力
@@ -170,7 +170,7 @@ class AbilityManager:
             else:
                 self.ability_keymap[ability_name] = ability_key
 
-        ui_control.ui_goto(page_main)
+        ui_control.goto_page(page_main)
         return res
 
     def change_ability(self, ability_name: str):
@@ -180,7 +180,7 @@ class AbilityManager:
             return True
         # 检查能力配置是否已初始化
         if self.ability_keymap is None:
-            ui_control.ui_goto(page_ability)
+            ui_control.goto_page(page_ability)
             self._check_ability_keymap()
         # 检查目标能力是否已配置
         key = self.ability_keymap.get(ability_name, None)
@@ -196,7 +196,7 @@ class AbilityManager:
                 if self._set_ability(ability_name, ability_key):
                     key = ability_key
 
-        ui_control.ui_goto(page_main)
+        ui_control.goto_page(page_main)
         if key:
             itt.key_press(key)
             self.current_ability = ability_name

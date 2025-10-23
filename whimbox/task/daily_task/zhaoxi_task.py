@@ -96,7 +96,7 @@ class ZhaoxiTask(TaskTemplate):
 
     @register_step("正在前往朝夕心愿")
     def step1(self):
-        ui_control.ui_goto(page_zxxy)
+        ui_control.goto_page(page_zxxy)
 
 
     @register_step("查看完成情况")
@@ -191,7 +191,7 @@ class ZhaoxiTask(TaskTemplate):
 
     @register_step("退出朝夕心愿")
     def step5(self):
-        ui_control.ui_goto(page_main)
+        ui_control.goto_page(page_main)
     
 
 if __name__ == "__main__":

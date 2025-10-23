@@ -114,7 +114,7 @@ class Map(MiniMap, BigMap):
 
 
     def reinit_smallmap(self) -> None:
-        ui_control.ui_goto(page_bigmap)
+        ui_control.goto_page(page_bigmap)
         self.update_region_and_map_name()
         # 如果在未支持的地图，就先传送到花愿镇
         if self.map_name not in REGION_NAME_TO_MAP_NAME_DICT:
@@ -122,7 +122,7 @@ class Map(MiniMap, BigMap):
         else:
             posi = self.get_bigmap_posi()
             self.init_position(tuple(map(int, list(posi))))
-        ui_control.ui_goto(page_main)
+        ui_control.goto_page(page_main)
         self.small_map_init_flag = True
         self.last_valid_position = self.position
         self.smallmap_upd_timer.reset()
@@ -363,7 +363,7 @@ class Map(MiniMap, BigMap):
                 raise BigMapTPError("bigmap tp failed")
 
         # 等待传送完成
-        while not (ui_control.get_page() == page_main):
+        while not (ui_control.verify_page(page_main)):
             time.sleep(0.5)
 
         self.init_position(tp_posi)

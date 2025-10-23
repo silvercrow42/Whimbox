@@ -48,7 +48,7 @@ class DigTask(TaskTemplate):
     
     @register_step("正在前往美鸭梨挖掘")
     def step1(self):
-        ui_control.ui_goto(page_esc)
+        ui_control.goto_page(page_esc)
         if not scroll_find_click(AreaEscEntrances, "美鸭梨挖掘"):
             raise Exception("美鸭梨挖掘入口未找到")
         time.sleep(1) # 等待页面跳转动画

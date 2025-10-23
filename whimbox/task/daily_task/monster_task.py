@@ -18,7 +18,7 @@ class MonsterTask(TaskTemplate):
 
     @register_step("正在前往魔物试炼幻境")
     def step1(self):
-        ui_control.ui_goto(page_huanjing_monster)
+        ui_control.goto_page(page_huanjing_monster)
     
 
     @register_step("选择试炼")
@@ -56,7 +56,7 @@ class MonsterTask(TaskTemplate):
 
     @register_step("退出魔物试炼幻境")
     def step5(self):
-        ui_control.ui_goto(page_main)
+        ui_control.goto_page(page_main)
 
 
 if __name__ == "__main__":

@@ -44,7 +44,7 @@ class MiralandTime():
             raise MiralandTime(f"Invalid Time String: {time_str}")
         else:
             logger.info(f"Now Miraland Time: {time_str}")
-            ui_control.ui_goto(UIPage.page_main)
+            ui_control.goto_page(UIPage.page_main)
             self.miraland_start_time = self.time_to_minutes(time_str)
             self.realworld_start_time = time.time()
 

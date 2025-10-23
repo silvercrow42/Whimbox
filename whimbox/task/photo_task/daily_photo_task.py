@@ -10,7 +10,7 @@ class DailyPhotoTask(TaskTemplate):
 
     @register_step("前往拍照界面")
     def step1(self):
-        ui_control.ui_goto(page_photo)
+        ui_control.goto_page(page_photo)
     
     @register_step("开始拍照")
     def step2(self):
@@ -28,7 +28,7 @@ class DailyPhotoTask(TaskTemplate):
 
     @register_step("退出拍照")
     def step4(self):
-        ui_control.ui_goto(page_main)
+        ui_control.goto_page(page_main)
 
 if __name__ == "__main__":
     daily_photo_task = DailyPhotoTask()

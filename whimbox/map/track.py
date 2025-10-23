@@ -50,7 +50,7 @@ class Track:
         material_type_icon = material_type_icon_dict[material_type]
 
         # 打开材料追踪窗口
-        ui_control.ui_goto(page_bigmap)
+        ui_control.goto_page(page_bigmap)
         itt.appear_then_click(IconUIBigmap)
         itt.wait_until_stable()
 
@@ -77,11 +77,11 @@ class Track:
             itt.move_and_click(AreaBigMapMaterialTrackConfirm.center_position())
             itt.wait_until_stable()
             self.tracking_material = material_name
-            ui_control.ui_goto(page_main)
+            ui_control.goto_page(page_main)
             return True
         elif button_text == "取消追踪":
             itt.key_press('esc')
-            ui_control.ui_goto(page_main)
+            ui_control.goto_page(page_main)
         else:
             raise Exception("该材料未开启精确追踪")
 

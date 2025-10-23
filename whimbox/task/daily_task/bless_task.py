@@ -18,7 +18,7 @@ class BlessTask(TaskTemplate):
 
     @register_step("正在前往祝福闪光幻境")
     def step1(self):
-        ui_control.ui_goto(page_huanjing_bless)
+        ui_control.goto_page(page_huanjing_bless)
     
 
     @register_step("选择试炼")
@@ -60,7 +60,7 @@ class BlessTask(TaskTemplate):
 
     @register_step("退出闪光幻境")
     def step6(self):
-        ui_control.ui_goto(page_main)
+        ui_control.goto_page(page_main)
 
 
 if __name__ == "__main__":

@@ -27,7 +27,7 @@ class JihuaTask(TaskTemplate):
 
     @register_step("正在前往素材激化幻境")
     def step1(self):
-        ui_control.ui_goto(page_huanjing_jihua)
+        ui_control.goto_page(page_huanjing_jihua)
 
 
     @register_step("继续前往素材激化幻境")

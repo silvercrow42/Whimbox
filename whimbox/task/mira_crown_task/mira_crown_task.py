@@ -14,7 +14,7 @@ class MiraCrownTask(TaskTemplate):
     
     @register_step("检查奇迹之冠进度")
     def step1(self):
-        ui_control.ui_goto(page_daily_task)
+        ui_control.goto_page(page_daily_task)
         texts = itt.ocr_multiple_lines(AreaMiraCrownOverview)
         for text in texts:
             if text.endswith("/45"):
@@ -29,7 +29,7 @@ class MiraCrownTask(TaskTemplate):
                     itt.move_and_click(AreaMiraCrownOverview.position)
                     itt.delay(1, comment="等待奇迹之冠页面加载")
                 else:
-                    ui_control.ui_goto(page_main)
+                    ui_control.goto_page(page_main)
                     self.task_stop(msg="奇迹之冠进度已满")
                 break
 

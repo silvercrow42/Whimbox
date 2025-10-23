@@ -3,6 +3,7 @@ from typing import List, Union
 
 from whimbox.ui.template.img_manager import ImgIcon
 from whimbox.ui.template.text_manager import Text
+from whimbox.ui.ui_assets import AreaPageTitleFeature
 
 class UIPage():
     parent = None
@@ -49,4 +50,13 @@ class UIPage():
     def add_check_icon(self, check_icon: ImgIcon):
         self.check_icon_list.append(check_icon)
 
+class TitlePage(UIPage):
+    def __init__(self, title: str):
+        (filename, line_number, function_name, text) = traceback.extract_stack()[-2]
+        self.name = text[:text.find('=')].strip()
+        self.title = title
+        self.links = {}
+
+    def is_current_page(self, itt):
+        return itt.ocr_single_line(area = AreaPageTitleFeature) == self.title
 

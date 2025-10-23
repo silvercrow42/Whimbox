@@ -11,7 +11,7 @@ class MonthlyPassTask(TaskTemplate):
 
     @register_step("打开奇迹之旅")
     def step1(self):
-        ui_control.ui_goto(page_monthly_pass)
+        ui_control.goto_page(page_monthly_pass)
     
     @register_step("领取奖励")
     def step2(self):
@@ -29,7 +29,7 @@ class MonthlyPassTask(TaskTemplate):
         
     @register_step("退出奇迹之旅")
     def step3(self):
-        ui_control.ui_goto(page_main)
+        ui_control.goto_page(page_main)
 
 if __name__ == "__main__":
     task = MonthlyPassTask()
