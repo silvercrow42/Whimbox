@@ -45,6 +45,7 @@ class JumpController(AdvanceThreading):
         self.normal_jump_timer = AdvanceTimer(0.3)
         self.prepare_double_jump_timer = AdvanceTimer(0.1)
         self._jump_state = JumpState.IDLE
+        self.double_jump_begin_time = 0 # 二段跳开始时间
 
     def is_jumping(self):
         return self._jump_state != JumpState.IDLE
@@ -78,6 +79,7 @@ class JumpController(AdvanceThreading):
     def _start_double_jump(self):
         self._jump_state = JumpState.DOUBLE_JUMP
         itt.key_press('spacebar')
+        self.double_jump_begin_time = time.time()
         logger.debug('start double jump')
 
     def stop_jump(self):
@@ -93,6 +95,7 @@ class JumpController(AdvanceThreading):
             logger.debug("stop prepare double jump")
         elif self._jump_state == JumpState.DOUBLE_JUMP:
             itt.key_press('spacebar')
+            self.double_jump_begin_time = 0
             self._jump_state = JumpState.IDLE
             logger.debug('stop double jump')
 

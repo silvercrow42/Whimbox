@@ -38,6 +38,7 @@ class AutoPathTask(TaskTemplate):
         self.target_point: PathPoint = None
         self.need_move_mode = MOVE_MODE_WALK
         self.last_need_move_mode = MOVE_MODE_WALK
+        self.current_game_move_mode = MOVE_MODE_WALK
 
         # 各类材料获取任务的结果记录
         self.material_count_dict = {}
@@ -59,7 +60,6 @@ class AutoPathTask(TaskTemplate):
     def task_stop(self):
         if not self.need_stop():
             super().task_stop(message="手动停止跑图")
-            self.clear_all()
             self.log_to_gui("手动停止跑图", is_error=True)
 
     def _update_next_target_point(self):
@@ -72,25 +72,43 @@ class AutoPathTask(TaskTemplate):
                     return
     
     def start_move(self, current_posi, target_posi, offset):
-        self.move_controller.start_move_ahead(current_posi, target_posi, offset)
+        if self.move_controller:
+            self.move_controller.start_move_ahead(current_posi, target_posi, offset)
 
     def stop_move(self):
-        self.move_controller.stop_move_ahead()
+        if self.move_controller:
+            self.move_controller.stop_move_ahead()
 
     def is_moving(self):
         if self.move_controller:
             return self.move_controller.is_moving
-        else:
-            return False
 
-    def start_jump(self):
-        self.jump_controller.start_jump()
-
-    def stop_jump(self):
+    def change_to_jump(self):
+        """切换到跳跃模式"""
         if self.jump_controller:
-            self.jump_controller.stop_jump()
-        else:
-            return False
+            self.current_game_move_mode, rate = get_move_mode_in_game(ret_rate=True)
+            if self.current_game_move_mode == MOVE_MODE_WALK:
+                logger.debug(f"change to jump, rate: {rate}")
+                # 游戏中二段跳瞬间，会出现一帧WALK状态的图标，所以这里还要判断连续两帧都是WALK，避免误判
+                if self.jump_controller.is_double_jumping() \
+                    and self.jump_controller.double_jump_begin_time \
+                    and time.time() - self.jump_controller.double_jump_begin_time > 0.1:
+                        self.jump_controller.clear_jump_state()
+                self.jump_controller.start_jump()
+            # 如果游戏中是跳跃图标，但是控制器不在跳跃，就说明被什么机制弹起来了或是下落中，触发一下二段跳
+            elif self.current_game_move_mode == MOVE_MODE_JUMP and (not self.jump_controller.is_jumping()):
+                self.jump_controller._start_double_jump()
+
+    def change_to_walk(self):
+        """切换到行走模式"""
+        if self.jump_controller:
+            self.current_game_move_mode, rate = get_move_mode_in_game(ret_rate=True)
+            if self.current_game_move_mode == MOVE_MODE_JUMP:
+                logger.debug(f"change to walk, rate: {rate}")
+                self.jump_controller.stop_jump()
+            # 有可能游戏中已经落地了，但是脚本中还记录当前为跳跃状态，所以强制清除跳跃
+            elif self.current_game_move_mode == MOVE_MODE_WALK and self.jump_controller.is_jumping():
+                self.jump_controller.clear_jump_state()
 
 
     @register_step("初始化各种信息")
@@ -161,7 +179,7 @@ class AutoPathTask(TaskTemplate):
                 # 处理各种ACTION
                 if self.target_point.action:
                     self.stop_move()
-                    self.stop_jump()
+                    self.change_to_walk()
                     if self.target_point.action == ACTION_PICK_UP:
                         pickup_task = PickupTask(check_stop_func=self.need_stop)
                         task_result = pickup_task.task_run()
@@ -209,7 +227,7 @@ class AutoPathTask(TaskTemplate):
             if target_dist >= not_teleport_offset:
                 self.log_to_gui(f"传送到附近的流转之柱")
                 self.stop_move()
-                self.stop_jump()
+                self.change_to_walk()
                 nikki_map.bigmap_tp(self.target_point.position, self.path_info.map, csf=self.need_stop)
                 self.curr_position = nikki_map.get_position()
         return is_end
@@ -230,32 +248,26 @@ class AutoPathTask(TaskTemplate):
 
 
     def inner_step_control_move(self):
-        game_move_mode = get_move_mode_in_game()
-        # 有可能游戏中已经落地了，但是脚本中还记录当前为跳跃状态，所以强制清除跳跃
-        # 游戏中二段跳瞬间，会出现一帧WALK状态的图标，所以这里还要判断连续两帧都是WALK，避免误判
-        if game_move_mode == MOVE_MODE_WALK and self.jump_controller.is_double_jumping():
-            time.sleep(0.1) 
-            game_move_mode = get_move_mode_in_game()
-            if game_move_mode == MOVE_MODE_WALK:
-                self.jump_controller.clear_jump_state()
+        # # 有可能游戏中已经落地了，但是脚本中还记录当前为跳跃状态，所以强制清除跳跃
+        # # 游戏中二段跳瞬间，会出现一帧WALK状态的图标，所以这里还要判断连续两帧都是WALK，避免误判
+        # if game_move_mode == MOVE_MODE_WALK and self.jump_controller.is_double_jumping():
+        #     time.sleep(0.1) 
+        #     game_move_mode = get_move_mode_in_game()
+        #     if game_move_mode == MOVE_MODE_WALK:
+        #         self.jump_controller.clear_jump_state()
             
         if self.need_move_mode == MOVE_MODE_WALK:
-            if game_move_mode == MOVE_MODE_JUMP:
-                self.stop_jump()
+            self.change_to_walk()
         elif self.need_move_mode == MOVE_MODE_JUMP:
-            if game_move_mode == MOVE_MODE_WALK:
-                self.start_jump()
-            # 如果游戏中是跳跃图标，但是控制器不在跳跃，就说明被什么机制弹起来了或是下落中，触发一下二段跳
-            elif game_move_mode == MOVE_MODE_JUMP and (not self.jump_controller.is_jumping()):
-                self.jump_controller._start_double_jump()
+            self.change_to_jump()
         
         self.start_move(self.curr_position, self.target_point.position, self.offset)
         
 
     def clear_all(self):
+        self.stop_move()
+        self.change_to_walk()
         if self.jump_controller is not None and self.move_controller is not None:
-            self.stop_move()
-            self.stop_jump()
             self.jump_controller.stop_threading()
             self.move_controller.stop_threading()
             self.jump_controller.join()
@@ -283,6 +295,6 @@ class AutoPathTask(TaskTemplate):
 
 
 if __name__ == "__main__":
-    task = AutoPathTask(path_name="example1_采集测试")
+    task = AutoPathTask(path_name="example2_跳跃测试")
     task_result = task.task_run()
     print(task_result.to_dict())
