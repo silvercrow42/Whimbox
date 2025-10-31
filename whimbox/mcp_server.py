@@ -168,21 +168,6 @@ async def record_path() -> dict:
     return task_result.to_dict()
 
 @mcp.tool()
-async def edit_path() -> dict:
-    """
-    用浏览器前往路线编辑网站，编辑指定的跑图路径文件
-    
-    Returns:
-        dict: 包含操作状态的字典，包含status和message字段
-    """
-    import webbrowser
-    webbrowser.open(f"https://nikkigallery.vip/autotools/pathcheck")
-    return {
-        "status": STATE_TYPE_SUCCESS,
-        "message": f"已打开路线编辑网站，请在浏览器中编辑路径文件"
-    }
-
-@mcp.tool()
 async def daily_photo_task() -> dict:
     """
     简单拍照，用于完成每日任务
