@@ -8,6 +8,12 @@
 """
 
 import sys
+
+import PyQt5, os
+dirname = os.path.dirname(PyQt5.__file__)
+qt_dir = os.path.join(dirname, 'Qt5', 'plugins', 'platforms')
+os.environ['QT_QPA_PLATFORM_PLUGIN_PATH'] = qt_dir
+
 from PyQt5.QtWidgets import QApplication
 from whimbox.ingame_ui.main_ui import IngameUI
 from whimbox.common.logger import logger
