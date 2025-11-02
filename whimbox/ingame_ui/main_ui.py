@@ -23,6 +23,7 @@ class IngameUI(QWidget):
         
         # 状态管理
         self.is_expanded = False
+        self.focus_on_game = True
         self.current_view = 'chat'  # 'function' 或 'chat'
         
         # UI组件
@@ -396,6 +397,7 @@ class IngameUI(QWidget):
         # 激活窗口并获取焦点
         self.setWindowState(Qt.WindowMinimized)
         self.setWindowState(Qt.WindowActive)
+        self.focus_on_game = False
 
     def give_back_focus(self):
         # 恢复透明窗口设置
@@ -404,6 +406,7 @@ class IngameUI(QWidget):
                                win32gui.GetWindowLong(hwnd, win32con.GWL_EXSTYLE) | win32con.WS_EX_TRANSPARENT)
         # 将焦点返回给游戏
         HANDLE_OBJ.set_foreground()
+        self.focus_on_game = True
 
     def position_window(self):
         """根据游戏窗口位置调整聊天窗口位置"""
@@ -464,6 +467,8 @@ class IngameUI(QWidget):
             if self.last_bbox != win_bbox:
                 self.position_window()
                 self.last_bbox = win_bbox
+            if active_process_name == PROCESS_NAME and not self.focus_on_game:
+                self.give_back_focus()
     
     def update_message(self, message: str):
         """更新聊天消息"""
