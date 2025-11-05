@@ -13,7 +13,7 @@ class ChatView(QWidget):
     """聊天视图组件"""
     # 信号定义
     request_focus = pyqtSignal()  # 请求获取焦点
-    release_focus = pyqtSignal()  # 请求释放焦点
+    release_focus = pyqtSignal(str)  # 请求释放焦点，参数为 title_text
     ui_update_signal = pyqtSignal(str, str)
     
     def __init__(self, parent=None):
@@ -301,7 +301,7 @@ class ChatView(QWidget):
             # 处理状态更新
             status_type = operation[7:]  # 去掉"status_"前缀
             if status_type == "on_tool_start":
-                self.release_focus.emit()  # 工具调用时释放焦点
+                self.release_focus.emit("⚪ 📦 奇想盒 [任务运行中，按 / 结束任务]")  # 工具调用时释放焦点
             if status_type == "on_tool_end":
                 self.request_focus.emit()  # 工具完成后请求焦点
             self.update_last_ai_status(status_type, param)

@@ -25,6 +25,7 @@ class IngameUI(QWidget):
         self.is_expanded = False
         self.focus_on_game = True
         self.current_view = 'chat'  # 'function' 或 'chat'
+        self.waiting_for_task_stop = False  # 等待任务停止标志
         
         # UI组件
         self.collapsed_widget = None
@@ -35,6 +36,7 @@ class IngameUI(QWidget):
         self.settings_dialog = None
         self.path_dialog = None
         self.task_worker = None  # 任务worker
+        self.title_label = None  # 标题标签（用于焦点状态显示）
         
         # 初始化UI
         self.init_ui()
@@ -85,8 +87,10 @@ class IngameUI(QWidget):
         """创建展开状态的聊天界面"""
         self.expanded_widget = QWidget(self)
         self.expanded_widget.setFixedSize(500, 600)
+        self.expanded_widget.setObjectName("expandedWidget")
+        # 初始样式（无焦点状态）
         self.expanded_widget.setStyleSheet("""
-            QWidget {
+            QWidget#expandedWidget {
                 background-color: rgba(255, 255, 255, 120);
                 border-radius: 12px;
                 border: 1px solid #E0E0E0;
@@ -100,11 +104,11 @@ class IngameUI(QWidget):
         
         # 标题栏
         title_layout = QHBoxLayout()
-        title_label = QLabel("📦 奇想盒")
-        title_label.setStyleSheet("""
+        self.title_label = QLabel("⚪ 📦 奇想盒 [按 / 激活窗口]")
+        self.title_label.setStyleSheet("""
             QLabel {
                 background-color: transparent;
-                font-size: 14px;
+                font-size: 16px;
                 font-weight: bold; 
                 border: none; 
             }
@@ -155,7 +159,7 @@ class IngameUI(QWidget):
             }
         """)
         
-        title_layout.addWidget(title_label)
+        title_layout.addWidget(self.title_label)
         title_layout.addStretch()
         title_layout.addWidget(settings_button)
         title_layout.addWidget(minimize_button)
@@ -196,8 +200,8 @@ class IngameUI(QWidget):
         # 创建聊天视图组件
         self.chat_view = ChatView(self.expanded_widget)
         # 连接焦点管理信号
-        self.chat_view.request_focus.connect(self.acquire_focus)
-        self.chat_view.release_focus.connect(self.give_back_focus)
+        self.chat_view.request_focus.connect(self.on_agent_task_request_focus)
+        self.chat_view.release_focus.connect(self.on_agent_task_release_focus)
         
         # 组装布局
         layout.addLayout(title_layout)
@@ -266,7 +270,7 @@ class IngameUI(QWidget):
     def start_task(self, config: dict):
         """启动任务"""
         # 将焦点返回给游戏
-        self.give_back_focus()
+        self.give_back_focus(title_text="⚪ 📦 奇想盒 [任务运行中，按 / 结束任务]")
         
         # 禁用所有按钮
         if self.function_view:
@@ -287,7 +291,7 @@ class IngameUI(QWidget):
     def start_task_with_path(self, config: dict, path_name: str):
         """启动需要路径参数的任务"""
         # 将焦点返回给游戏
-        self.give_back_focus()
+        self.give_back_focus(title_text="⚪ 📦 奇想盒 [任务运行中，按 / 结束任务]")
         
         # 禁用所有按钮
         if self.function_view:
@@ -295,7 +299,7 @@ class IngameUI(QWidget):
         
         # 在聊天视图中显示消息
         if self.chat_view:
-            self.chat_view.add_message(f'开始自动跑图：{path_name}，按"引号"键，随时终止任务\n', 'ai')
+            self.chat_view.add_message(f'开始自动跑图：{path_name}，按 / 结束任务\n', 'ai')
         
         # 合并路径参数
         params = dict(config.get('task_params', {}))
@@ -332,6 +336,28 @@ class IngameUI(QWidget):
         if self.task_worker:
             self.task_worker.deleteLater()
             self.task_worker = None
+        
+        # 如果是等待任务停止状态，现在可以切换焦点了
+        if self.waiting_for_task_stop:
+            self.waiting_for_task_stop = False
+            self.expand_chat()
+        else:
+            # 正常完成，只获取焦点
+            self.acquire_focus()
+    
+    def on_agent_task_release_focus(self, title_text: str):
+        """Agent任务开始时释放焦点"""
+        self.give_back_focus(title_text)
+    
+    def on_agent_task_request_focus(self):
+        """Agent任务完成时请求焦点"""
+        # 如果是等待任务停止状态，说明用户按了 /，现在任务结束了
+        if self.waiting_for_task_stop:
+            self.waiting_for_task_stop = False
+            self.expand_chat()
+        else:
+            # 正常完成，只获取焦点（不展开，因为用户可能在聊天界面）
+            self.acquire_focus()
     
     
     def show_collapsed(self):
@@ -391,6 +417,32 @@ class IngameUI(QWidget):
         self.settings_dialog.show_centered()
         self.settings_dialog.exec_()
     
+    def update_focus_visual(self, has_focus: bool, title_text: str = "⚪ 📦 奇想盒 [按 / 激活窗口]"):
+        """更新焦点视觉状态"""
+        if not self.expanded_widget or not self.title_label:
+            return
+        
+        if has_focus:
+            # 有焦点：蓝色粗边框 + 发光效果
+            self.expanded_widget.setStyleSheet("""
+                QWidget#expandedWidget {
+                    background-color: rgba(255, 255, 255, 120);
+                    border-radius: 12px;
+                    border: 3px solid #2196F3;
+                }
+            """)
+            self.title_label.setText("🟢 📦 奇想盒")
+        else:
+            # 无焦点：灰色细边框
+            self.expanded_widget.setStyleSheet("""
+                QWidget#expandedWidget {
+                    background-color: rgba(255, 255, 255, 120);
+                    border-radius: 12px;
+                    border: 1px solid #E0E0E0;
+                }
+            """)
+            self.title_label.setText(title_text)
+
     def acquire_focus(self):
         # 移除透明窗口设置，使窗口可以接收输入
         hwnd = int(self.winId())
@@ -400,8 +452,10 @@ class IngameUI(QWidget):
         self.setWindowState(Qt.WindowMinimized)
         self.setWindowState(Qt.WindowActive)
         self.focus_on_game = False
+        # 更新视觉状态
+        self.update_focus_visual(True)
 
-    def give_back_focus(self):
+    def give_back_focus(self, title_text: str = "⚪ 📦 奇想盒 [按 / 激活窗口]"):
         # 恢复透明窗口设置
         hwnd = int(self.winId())
         win32gui.SetWindowLong(hwnd, win32con.GWL_EXSTYLE,
@@ -409,6 +463,8 @@ class IngameUI(QWidget):
         # 将焦点返回给游戏
         HANDLE_OBJ.set_foreground()
         self.focus_on_game = True
+        # 更新视觉状态
+        self.update_focus_visual(False, title_text)
 
     def position_window(self):
         """根据游戏窗口位置调整聊天窗口位置"""
@@ -438,7 +494,24 @@ class IngameUI(QWidget):
         """处理斜杠键按下事件"""
         if win32gui.GetForegroundWindow() != HANDLE_OBJ.get_handle():
             return
-        self.expand_chat()
+        
+        # 如果已经在等待任务停止，忽略重复按键
+        if self.waiting_for_task_stop:
+            return
+        
+        # 检查是否有手动任务或Agent任务正在运行
+        has_manual_task = self.task_worker and self.task_worker.isRunning()
+        has_agent_task = self.chat_view and self.chat_view.current_worker and self.chat_view.current_worker.isRunning()
+        
+        if has_manual_task or has_agent_task:
+            # 任务正在运行，只更新标题，不切换焦点
+            # 任务会自己检测到 / 键并停止（在 task_template.py 中）
+            self.waiting_for_task_stop = True
+            self.update_focus_visual(False, "⚪ 📦 奇想盒 [等待任务结束中…]")
+            logger.info("Waiting for task to stop...")
+        else:
+            # 没有任务运行，正常展开聊天窗口
+            self.expand_chat()
     
     def on_esc_pressed(self):
         """处理ESC键按下事件"""

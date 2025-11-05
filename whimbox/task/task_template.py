@@ -68,7 +68,7 @@ class TaskTemplate:
         self.listener.start()
 
         # 添加默认停止热键
-        self.add_hotkey("'", self.task_stop)
+        self.add_hotkey("/", self.task_stop)
 
         
     def _on_key_press(self, key):

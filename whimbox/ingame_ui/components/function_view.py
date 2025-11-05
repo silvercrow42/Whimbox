@@ -11,7 +11,7 @@ FUNCTION_BUTTONS = [
         'label': '一条龙',
         'task_name': 'all_in_one_task',
         'task_params': {},
-        'start_message': '开始一条龙，按"引号"键，随时终止任务\n',
+        'start_message': '开始一条龙，按 / 结束任务\n',
     },
     {
         'label': '自动跑图',
@@ -23,7 +23,7 @@ FUNCTION_BUTTONS = [
         'label': '录制路线',
         'task_name': 'record_path',
         'task_params': {},
-        'start_message': '开始录制路线，按"引号"键，停止录制\n',
+        'start_message': '开始录制路线，按 / 停止录制\n',
     },
     {
         'label': '打开路线文件夹',
